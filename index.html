@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Bedrock Script Debugger & Code Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        textarea, input[type="text"] { width: 100%; margin-bottom: 10px; }
+        textarea { height: 300px; }
+        button { padding: 10px 20px; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Minecraft Bedrock Script Debugger & Code Generator</h1>
+    <textarea id="codeArea" placeholder="Paste your script here..."></textarea><br>
+    <input type="file" id="fileUpload">
+    <button onclick="validateCode()">Validate & Debug</button>
+    <button onclick="fixCode()">Fix Code</button>
+    <button onclick="exportCode()">Export Code</button>
+
+    <h2>Generate Code from Text</h2>
+    <input type="text" id="textPrompt" placeholder="Describe the code you want to generate...">
+    <button onclick="generateCode()">Generate Code</button>
+
+    <script>
+        // Handle File Upload
+        document.getElementById('fileUpload').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('codeArea').value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Validate Code
+        function validateCode() {
+            const code = document.getElementById('codeArea').value;
+            const errors = detectScriptErrors(code);
+
+            if (errors.length > 0) {
+                alert('Errors found:\n' + errors.join('\n'));
+            } else {
+                alert('No errors detected.');
+            }
+        }
+
+        // Detect Script Errors
+        function detectScriptErrors(script) {
+            const errors = [];
+
+            if (!script.includes('import { world } from "@minecraft/server";')) {
+                errors.push('Missing import for "@minecraft/server".');
+            }
+
+            if (script.includes('system.run()')) {
+                errors.push('Usage of "system.run()" detected. Ensure proper execution context.');
+            }
+
+            return errors;
+        }
+
+        // Fix Code
+        function fixCode() {
+            let code = document.getElementById('codeArea').value;
+
+            if (!code.includes('import { world } from "@minecraft/server";')) {
+                code = 'import { world } from "@minecraft/server";\n' + code;
+            }
+
+            document.getElementById('codeArea').value = code;
+            alert('Code has been fixed.');
+        }
+
+        // Export Code
+        function exportCode() {
+            const code = document.getElementById('codeArea').value;
+            const blob = new Blob([code], { type: 'text/javascript' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'fixed_script.js';
+            link.click();
+        }
+
+        // Generate Code from Text
+        function generateCode() {
+            const prompt = document.getElementById('textPrompt').value;
+
+            if (!prompt.trim()) {
+                alert('Please enter a description to generate code.');
+                return;
+            }
+
+            let generatedCode = '';
+
+            if (prompt.toLowerCase().includes('player join')) {
+                generatedCode = `
+import { world } from "@minecraft/server";
+
+world.events.playerJoin.subscribe((event) => {
+    const player = event.player;
+    console.log(\`Player joined: \${player.name}\`);
+});
+                `.trim();
+            } else if (prompt.toLowerCase().includes('chat event')) {
+                generatedCode = `
+import { world } from "@minecraft/server";
+
+world.events.chat.subscribe((event) => {
+    const sender = event.sender;
+    const message = event.message;
+    console.log(\`[\${sender.name}] \${message}\`);
+});
+                `.trim();
+            } else {
+                generatedCode = '// Code generation not available for this prompt.';
+            }
+
+            document.getElementById('codeArea').value = generatedCode;
+            alert('Code generated and added to the text area.');
+        }
+    </script>
+</body>
+</html>
